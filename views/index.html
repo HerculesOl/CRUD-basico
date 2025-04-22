@@ -1,0 +1,70 @@
+<!-- views/index.html -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>CRUD com Sequelize</title>
+</head>
+<body>
+  <h1>Bem-vindo ao CRUD Sequelize!</h1>
+  <form id="userForm">
+    <input type="text" name="nome" placeholder="Nome" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <button type="submit">Cadastrar</button>
+  </form>
+
+  <h2>Usuários</h2>
+  <ul id="userList"></ul>
+
+  <script>
+    async function carregarUsuarios() {
+      const res = await fetch('/users');
+      const users = await res.json();
+      const lista = document.getElementById('userList');
+      lista.innerHTML = '';
+      users.forEach(user => {
+        const li = document.createElement('li');
+        li.innerHTML = `${user.nome} (${user.email}) 
+          <button onclick="deletar(${user.id})">Excluir</button>
+          <button onclick="editar(${user.id}, '${user.nome}', '${user.email}')">Editar</button>`;
+        lista.appendChild(li);
+      });
+    }
+
+    document.getElementById('userForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      await fetch('/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: formData.get('nome'),
+          email: formData.get('email'),
+        }),
+      });
+      e.target.reset();
+      carregarUsuarios();
+    });
+
+    async function deletar(id) {
+      await fetch(`/users/${id}`, { method: 'DELETE' });
+      carregarUsuarios();
+    }
+
+    async function editar(id, nome, email) {
+      const novoNome = prompt('Novo nome:', nome);
+      const novoEmail = prompt('Novo email:', email);
+      if (novoNome && novoEmail) {
+        await fetch(`/users/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome: novoNome, email: novoEmail }),
+        });
+        carregarUsuarios();
+      }
+    }
+
+    carregarUsuarios();
+  </script>
+</body>
+</html>
